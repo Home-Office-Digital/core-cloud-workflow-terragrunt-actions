@@ -1,0 +1,105 @@
+name: "Terraform Validate"
+description: "Checks Terraform syntax and consistency"
+
+inputs:
+  working-directory:
+    description: "Directory of the Terraform code"
+    required: false
+    default: "."
+  terraform-version:
+    description: "Terraform version to use"
+    required: false
+    default: "~1.7.0"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ inputs.terraform-version }}
+
+    # If you want to run terraform validate on its own, you'll need terraform init, hence this conditional logic.
+    - name: Download Terraform Folders
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: terraform-files
+
+    - name: Fix Binary Permissions
+      shell: bash
+      # This restores the +x bit that artifacts strip away
+      run: |
+        if [ -d ".terraform/providers" ]; then
+          find .terraform/providers -type f -exec chmod +x {} \;
+        fi
+
+    - name: Conditional Init
+      shell: bash
+      # Only run init if the .terraform directory is missing (artifact download failed or was skipped)
+      run: |
+        if [ ! -d ".terraform" ]; then
+          terraform init -backend=false -input=false
+        else
+          echo "Initialized environment found via artifact. Skipping init."
+        fi
+
+    - name: Terraform Validate
+      shell: bash
+      continue-on-error: true
+      run: |
+        VALIDATE_FILE="${{ github.workspace }}/validate.txt"
+        cd ${{ inputs.working-directory }}
+
+        terraform validate 2>&1 | tee "$VALIDATE_FILE"
+        EXIT_CODE=$?
+
+        if [ $EXIT_CODE -eq 0 ]; then
+          echo "Validate_Outcome=success" >> $GITHUB_ENV
+          echo "Validator found no fatal errors."
+        else
+          echo "Validate_Outcome=failed" >> $GITHUB_ENV
+          echo "Validator found errors."
+        fi
+
+    # Generate summary for PR/Actions UI
+    - name: Generate Validate Summary
+      if: always()
+      shell: bash
+      run: |
+        VALIDATE_FILE="${{ github.workspace }}/validate.txt"
+        echo "## Terraform Validate Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if [ "$Validate_Outcome" == "success" ]; then
+          echo "✅ **Status:** Passed - No validation issues detected" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<details><summary>Click to expand for any warnings</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```warnings' >> $GITHUB_STEP_SUMMARY
+          cat "$VALIDATE_FILE" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Status:** Failed - Validation issues detected" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<details><summary>Click to expand for errors and warnings</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```warnings' >> $GITHUB_STEP_SUMMARY
+          cat "$VALIDATE_FILE" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Configuration" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Working Directory | \`${{ inputs.working-directory }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| Terraform Version | \`${{ inputs.terraform-version }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
