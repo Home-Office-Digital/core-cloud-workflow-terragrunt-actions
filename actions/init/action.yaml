@@ -41,7 +41,7 @@ inputs:
   terragrunt-version:
     description: 'Terragrunt version to use'
     required: false
-    default: '~0.59.6'
+    default: '0.59.6'
     type: string
   working-directory:
     description: 'Directory containing main.tf'
