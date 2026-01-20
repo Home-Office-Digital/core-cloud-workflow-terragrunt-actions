@@ -72,14 +72,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - uses: aws-actions/configure-aws-credentials@v4
-        name: Configure AWS IdP Credentials
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.account_id }}:role/${{ inputs.plan_role }}
-          role-session-name: GitHubActions
-          retry-max-attempts: 5
-          aws-region: eu-west-2
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
