@@ -34,7 +34,7 @@ on:
       terraform-version:
         description: 'Terraform version to use'
         required: false
-        default: '~1.7.0'
+        default: '1.7.0'
         type: string
       terragrunt-version:
         description: 'Terragrunt version to use'
