@@ -102,6 +102,8 @@ runs:
 
     - name: Terragrunt Init
       uses: gruntwork-io/terragrunt-action@v2
+      env:
+        env_name: ${{ inputs.github-environment }}
       with:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
