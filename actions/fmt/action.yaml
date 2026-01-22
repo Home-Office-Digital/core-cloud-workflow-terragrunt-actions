@@ -33,7 +33,7 @@ runs:
       run: |
         DIFF_FILE="${{ github.workspace }}/fmt_diff.txt"
         cd "${{ inputs.working-directory }}"
-        git diff > "$DIFF_FILE"
+        git diff -- '*.hcl' ':(exclude).terraform.lock.hcl' > "$DIFF_FILE"
         if [ -s "$DIFF_FILE" ]; then
           echo "Formatting issues found."
           cat "$DIFF_FILE"
