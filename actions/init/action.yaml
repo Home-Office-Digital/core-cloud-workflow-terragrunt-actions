@@ -95,11 +95,6 @@ runs:
           echo "No DynamoDB table name provided. Skipping DynamoDB creation."
         fi
 
-    - name: Debug
-      shell: bash
-      run: |
-        tree .
-
     - name: Terragrunt Init
       uses: gruntwork-io/terragrunt-action@v2
       env:

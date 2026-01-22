@@ -89,12 +89,12 @@ jobs:
           terraform-version: ${{ inputs.terraform-version }}
           terragrunt-version: ${{ inputs.terragrunt-version }}
           working-directory: ${{ inputs.working-directory }}
-#
-#       - name: Terragrunt Fmt
-#         id: quality-checks
-#         uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/actions/fmt@main
-#         with:
-#           working-directory: ${{ inputs.working-directory }}
+
+      - name: Terragrunt Fmt
+        id: quality-checks
+        uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/actions/fmt@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
 
 #       - name: Terraform Validate
 #         if: success() || failure()

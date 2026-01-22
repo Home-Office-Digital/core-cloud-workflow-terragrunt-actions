@@ -1,36 +1,47 @@
-name: "Terraform Format"
-description: "Terraform format checks"
+name: "Terragrunt Format"
+description: "Terragrunt format checks of HCL files"
 
 inputs:
-  working-directory:
-    description: "Directory of the Terraform code"
-    required: false
-    default: "."
   terraform-version:
     description: "Terraform version to use"
     required: false
     default: "1.7.0"
+  terragrunt-version:
+    description: 'Terragrunt version to use'
+    required: false
+    default: '0.59.6'
+    type: string
+  working-directory:
+    description: "Directory of the Terragrunt code"
+    required: false
+    default: "."
+
 
 runs:
   using: "composite"
   steps:
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
+    - name: Run Terragrunt hclfmt
+      uses: gruntwork-io/terragrunt-action@v2
       with:
-        terraform_version: ${{ inputs.terraform-version }}
-        terraform_wrapper: false
+        tf_version: ${{ inputs.terraform-version }}
+        tg_version: ${{ inputs.terragrunt-version }}
+        tg_dir: ${{ inputs.working-directory }}
+        tg_command: 'hclfmt'
 
-    - name: Check Formatting
+    - name: Check Formatting and Generate Diff
       shell: bash
       run: |
         DIFF_FILE="${{ github.workspace }}/fmt_diff.txt"
-        cd "${{ inputs.working_directory }}"
-
-        terraform fmt -recursive -diff -check 2>&1 | tee "$DIFF_FILE"
-        
+        cd "${{ inputs.working-directory }}"
+        git diff > "$DIFF_FILE"
         if [ -s "$DIFF_FILE" ]; then
+          echo "Formatting issues found."
+          cat "$DIFF_FILE"
           echo "FMT_Outcome=failed" >> $GITHUB_ENV
+          git checkout .
+          exit 1
         else
+          echo "No formatting issues found."
           echo "FMT_Outcome=success" >> $GITHUB_ENV
         fi
 
