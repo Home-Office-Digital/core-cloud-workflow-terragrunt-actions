@@ -2,6 +2,11 @@ name: "Terragrunt Validate"
 description: "Checks Terragrunt syntax and consistency"
 
 inputs:
+  github-environment:
+    description: 'The name of your AWS environment. Create an environment secret called ACCOUNT_ID, also.'
+    required: false
+    default: 'placeholder'
+    type: string
   terraform-version:
     description: "Terraform version to use"
     required: false
@@ -36,11 +41,6 @@ runs:
           echo "No .terragrunt-cache found."
         fi
 
-    - name: Debug
-      shell: bash
-      run: |
-        tree -a .
-
     - name: Terragrunt Validate
       id: tg_validate
       uses: gruntwork-io/terragrunt-action@v2
@@ -52,7 +52,6 @@ runs:
       env:
         env_name: ${{ inputs.github-environment }}
         TERRAGRUNT_DOWNLOAD: .terragrunt-cache
-        TG_DISABLE_INIT: true
 
     - name: Capture and Decode Output
       shell: bash
@@ -104,4 +103,5 @@ runs:
         echo "| Working Directory | \`${{ inputs.working-directory }}\` |" >> $GITHUB_STEP_SUMMARY
         echo "| Terraform Version | \`${{ inputs.terraform-version }}\` |" >> $GITHUB_STEP_SUMMARY
         echo "| Terragrunt Version | \`${{ inputs.terragrunt-version }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| Github Environment | \`${{ inputs.github-environment }}\` |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY

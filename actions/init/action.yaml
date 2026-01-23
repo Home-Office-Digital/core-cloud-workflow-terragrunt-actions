@@ -106,11 +106,6 @@ runs:
         tg_dir: ${{ inputs.working-directory }}
         tg_command: 'init -input=false'
 
-    - name: Debug
-      shell: bash
-      run: |
-        tree -a .
-
     - name: Upload Terragrunt Folders
       uses: actions/upload-artifact@v4
       with:

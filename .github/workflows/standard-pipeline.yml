@@ -100,6 +100,7 @@ jobs:
         if: success() || failure()
         uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/actions/validate@main
         with:
+          github-environment: ${{ inputs.github-environment }}
           working-directory: ${{ inputs.working-directory }}
           terraform-version: ${{ inputs.terraform-version }}
           terragrunt-version: ${{ inputs.terragrunt-version }}
