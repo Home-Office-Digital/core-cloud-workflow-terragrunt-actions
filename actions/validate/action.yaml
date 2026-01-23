@@ -53,20 +53,15 @@ runs:
       shell: bash
       if: always()
       run: |
-        if [ -z "${{ steps.tg_validate.outputs.tg_action_output }}" ]; then
-          echo "Validation failed with the following errors (captured from logs):" > validate.txt
-          echo "------------------------------------------------------------" >> validate.txt
-          echo "Check the 'Terragrunt Validate' step logs for the full trace." >> validate.txt
-          echo "Common causes: HCL syntax errors or missing provider cache." >> validate.txt
-        else
-          echo "${{ steps.tg_validate.outputs.tg_action_output }}" > validate.txt
-        fi
+        echo "OUTPUT<<EOF" >> $GITHUB_ENV
+        echo "${{ steps.tg_validate.outputs.tg_action_output }}" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
 
-        if [ "${{ steps.tg_validate.outcome }}" == "success" ]; then
-          echo "Validate_Outcome=success" >> $GITHUB_ENV
-        else
-          echo "Validate_Outcome=failed" >> $GITHUB_ENV
-        fi
+    - name: Write Validate File
+      shell: bash
+      if: always()
+      run: |
+        echo "$OUTPUT" > validate.txt
 
     # Generate summary for PR/Actions UI
     - name: Generate Validate Summary
