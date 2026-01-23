@@ -23,7 +23,7 @@ runs:
       continue-on-error: true
       with:
         name: terragrunt-files
-        path: .
+        path: ${{ inputs.working-directory }}
 
     - name: Fix Binary Permissions
       shell: bash
@@ -36,32 +36,39 @@ runs:
           echo "No .terragrunt-cache found."
         fi
 
+    - name: Debug
+      shell: bash
+      run: |
+        tree -a .
+
     - name: Terragrunt Validate
       id: tg_validate
       uses: gruntwork-io/terragrunt-action@v2
-      continue-on-error: true
       with:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
         tg_dir: ${{ inputs.working-directory }}
-        tg_command: 'validate --terragrunt-no-auto-init'
+        tg_command: 'validate'
       env:
         env_name: ${{ inputs.github-environment }}
         TERRAGRUNT_DOWNLOAD: .terragrunt-cache
+        TG_DISABLE_INIT: true
 
-    - name: Capture Output for Summary
+    - name: Capture and Decode Output
       shell: bash
       if: always()
+      env:
+        RAW_LOG: ${{ steps.tg_validate.outputs.tg_action_output }}
       run: |
-        echo "OUTPUT<<EOF" >> $GITHUB_ENV
-        echo "${{ steps.tg_validate.outputs.tg_action_output }}" >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
+        python3 -c "import sys, urllib.parse, os; print(urllib.parse.unquote(os.environ['RAW_LOG']))" > validate.txt
 
-    - name: Write Validate File
-      shell: bash
-      if: always()
-      run: |
-        echo "$OUTPUT" > validate.txt
+        sed -i 's/\\M-b\\M-\^U\\M-7//g' validate.txt 2>/dev/null || true
+
+        if [ "${{ steps.tg_validate.outcome }}" == "success" ]; then
+          echo "Validate_Outcome=success" >> $GITHUB_ENV
+        else
+          echo "Validate_Outcome=failed" >> $GITHUB_ENV
+        fi
 
     # Generate summary for PR/Actions UI
     - name: Generate Validate Summary
@@ -73,26 +80,19 @@ runs:
         echo "" >> $GITHUB_STEP_SUMMARY
 
         if [ "$Validate_Outcome" == "success" ]; then
-          echo "✅ **Status:** Passed - No validation issues detected" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "<details><summary>Click to expand for any warnings</summary>" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```warnings' >> $GITHUB_STEP_SUMMARY
-          cat "$VALIDATE_FILE" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "</details>" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status:** Passed" >> $GITHUB_STEP_SUMMARY
         else
-          echo "❌ **Status:** Failed - Validation issues detected" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "<details><summary>Click to expand for errors and warnings</summary>" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```warnings' >> $GITHUB_STEP_SUMMARY
-          cat "$VALIDATE_FILE" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "</details>" >> $GITHUB_STEP_SUMMARY
+          echo "❌ **Status:** Failed" >> $GITHUB_STEP_SUMMARY
         fi
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "<details><summary>Click to view logs</summary>" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo '```hcl' >> $GITHUB_STEP_SUMMARY
+        cat "$VALIDATE_FILE" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY 
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "</details>" >> $GITHUB_STEP_SUMMARY
 
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "---" >> $GITHUB_STEP_SUMMARY
