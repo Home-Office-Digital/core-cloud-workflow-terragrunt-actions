@@ -99,6 +99,7 @@ runs:
       uses: gruntwork-io/terragrunt-action@v2
       env:
         env_name: ${{ inputs.github-environment }}
+        TERRAGRUNT_DOWNLOAD: .terragrunt-cache
       with:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
@@ -110,7 +111,11 @@ runs:
       with:
         name: terragrunt-files
         path: |
-          .terraform/
-          .terraform.lock.hcl
+          ${{ inputs.working-directory }}/**/.terragrunt-cache/
+          ${{ inputs.working-directory }}/**/.terraform.lock.hcl
+          ${{ inputs.working-directory }}/**/*.tfvars
+          ${{ inputs.working-directory }}/**/backend.tf
+          ${{ inputs.working-directory }}/**/provider.tf
         include-hidden-files: true
         if-no-files-found: error
+        retention-days: 1

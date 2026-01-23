@@ -96,12 +96,13 @@ jobs:
         with:
           working-directory: ${{ inputs.working-directory }}
 
-#       - name: Terraform Validate
-#         if: success() || failure()
-#         uses: UKHomeOffice/core-cloud-workflow-terraform-actions/actions/validate@main
-#         with:
-#           working-directory: ${{ inputs.working-directory }}
-#           terraform-version: ${{ inputs.terraform-version }}
+      - name: Terragrunt Validate
+        if: success() || failure()
+        uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/actions/validate@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          terraform-version: ${{ inputs.terraform-version }}
+          terragrunt-version: ${{ inputs.terragrunt-version }}
 
 # # TODO: TFLint is not part of the official terraform CLI and is more complex. Suggest keeping that in separate repo and pointing to it here, with the ability to disable
 #       - name: TFLint

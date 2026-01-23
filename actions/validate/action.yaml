@@ -1,65 +1,71 @@
-name: "Terraform Validate"
-description: "Checks Terraform syntax and consistency"
+name: "Terragrunt Validate"
+description: "Checks Terragrunt syntax and consistency"
 
 inputs:
-  working-directory:
-    description: "Directory of the Terraform code"
-    required: false
-    default: "."
   terraform-version:
     description: "Terraform version to use"
     required: false
     default: "1.7.0"
+  terragrunt-version:
+    description: "Terragrunt version to use"
+    required: false
+    default: "0.59.6"
+  working-directory:
+    description: "Directory of the Terragrunt code"
+    required: false
+    default: "."
 
 runs:
   using: "composite"
   steps:
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: ${{ inputs.terraform-version }}
-
-    # If you want to run terraform validate on its own, you'll need terraform init, hence this conditional logic.
-    - name: Download Terraform Folders
+    - name: Download Terragrunt Cache
       uses: actions/download-artifact@v4
       continue-on-error: true
       with:
-        name: terraform-files
+        name: terragrunt-files
+        path: .
 
     - name: Fix Binary Permissions
       shell: bash
       # This restores the +x bit that artifacts strip away
       run: |
-        if [ -d ".terraform/providers" ]; then
-          find .terraform/providers -type f -exec chmod +x {} \;
-        fi
-
-    - name: Conditional Init
-      shell: bash
-      # Only run init if the .terraform directory is missing (artifact download failed or was skipped)
-      run: |
-        if [ ! -d ".terraform" ]; then
-          terraform init -backend=false -input=false
+        if [ -d ".terragrunt-cache" ]; then
+          echo "Found .terragrunt-cache, restoring provider permissions..."
+          find . -name "terraform-provider-*" -type f -exec chmod +x {} \;
         else
-          echo "Initialized environment found via artifact. Skipping init."
+          echo "No .terragrunt-cache found."
         fi
 
-    - name: Terraform Validate
-      shell: bash
+    - name: Terragrunt Validate
+      id: tg_validate
+      uses: gruntwork-io/terragrunt-action@v2
       continue-on-error: true
+      with:
+        tf_version: ${{ inputs.terraform-version }}
+        tg_version: ${{ inputs.terragrunt-version }}
+        tg_dir: ${{ inputs.working-directory }}
+        tg_command: 'validate --terragrunt-no-auto-init'
+      env:
+        env_name: ${{ inputs.github-environment }}
+        TERRAGRUNT_DOWNLOAD: .terragrunt-cache
+
+    - name: Capture Output for Summary
+      shell: bash
+      if: always()
       run: |
-        VALIDATE_FILE="${{ github.workspace }}/validate.txt"
-        cd ${{ inputs.working-directory }}
+        if [ -z "${{ steps.tg_validate.outputs.tg_action_output }}" ]; then
+          echo "Validation failed with the following errors (captured from logs):" > validate.txt
+          echo "------------------------------------------------------------" >> validate.txt
+          echo "Check the 'Terragrunt Validate' step logs for the full trace." >> validate.txt
+          echo "Common causes: HCL syntax errors or missing provider cache." >> validate.txt
+        else
+          echo "${{ steps.tg_validate.outputs.tg_action_output }}" > validate.txt
+        fi
 
-        terraform validate 2>&1 | tee "$VALIDATE_FILE"
-        EXIT_CODE=$?
-
-        if [ $EXIT_CODE -eq 0 ]; then
+        if [ "${{ steps.tg_validate.outcome }}" == "success" ]; then
           echo "Validate_Outcome=success" >> $GITHUB_ENV
-          echo "Validator found no fatal errors."
         else
           echo "Validate_Outcome=failed" >> $GITHUB_ENV
-          echo "Validator found errors."
         fi
 
     # Generate summary for PR/Actions UI
@@ -67,8 +73,8 @@ runs:
       if: always()
       shell: bash
       run: |
-        VALIDATE_FILE="${{ github.workspace }}/validate.txt"
-        echo "## Terraform Validate Results" >> $GITHUB_STEP_SUMMARY
+        VALIDATE_FILE="validate.txt"
+        echo "## Terragrunt Validate Results" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
 
         if [ "$Validate_Outcome" == "success" ]; then
@@ -102,4 +108,5 @@ runs:
         echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
         echo "| Working Directory | \`${{ inputs.working-directory }}\` |" >> $GITHUB_STEP_SUMMARY
         echo "| Terraform Version | \`${{ inputs.terraform-version }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| Terragrunt Version | \`${{ inputs.terragrunt-version }}\` |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
