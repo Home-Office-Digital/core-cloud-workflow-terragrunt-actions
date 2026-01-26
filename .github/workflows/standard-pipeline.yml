@@ -113,7 +113,7 @@ jobs:
           working_directory: ${{ inputs.working-directory }}
           tflint_recursive: true
 
-      - name: Terraform Plan
+      - name: Terragrunt Plan
         id: plan
         uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/actions/plan@main
         with:
