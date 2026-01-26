@@ -95,27 +95,39 @@ runs:
           echo "No DynamoDB table name provided. Skipping DynamoDB creation."
         fi
 
+    - name: Create Plugin Cache Directory
+      shell: bash
+      run: |
+        mkdir -p .terraform.d/plugin-cache
+
     - name: Terragrunt Init
       uses: gruntwork-io/terragrunt-action@v2
       env:
         env_name: ${{ inputs.github-environment }}
-        TERRAGRUNT_DOWNLOAD: .terragrunt-cache
+        TERRAGRUNT_DOWNLOAD: /github/workspace/.terragrunt-cache
+        TF_PLUGIN_CACHE_DIR: /github/workspace/.terraform.d/plugin-cache
       with:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
         tg_dir: ${{ inputs.working-directory }}
-        tg_command: 'init -input=false'
+        tg_command: 'init -input=false --terragrunt-download-dir ${{ github.workspace }}/.terragrunt-cache'
+
+    - name: Debug
+      shell: bash
+      run: |
+        tree -a .
+        ls -la .terragrunt-cache || echo "Still not in root"
+        ls -la ${{ inputs.working-directory }}/.terragrunt-cache || echo "Not in working dir"
 
     - name: Upload Terragrunt Folders
       uses: actions/upload-artifact@v4
       with:
         name: terragrunt-files
         path: |
-          ${{ inputs.working-directory }}/**/.terragrunt-cache/
-          ${{ inputs.working-directory }}/**/.terraform.lock.hcl
-          ${{ inputs.working-directory }}/**/*.tfvars
-          ${{ inputs.working-directory }}/**/backend.tf
-          ${{ inputs.working-directory }}/**/provider.tf
+          .terragrunt-cache/
+          .terraform.d/
+          ${{ inputs.working-directory }}/.terraform/
+          ${{ inputs.working-directory }}/.terraform.lock.hcl
         include-hidden-files: true
         if-no-files-found: error
         retention-days: 1

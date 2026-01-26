@@ -55,10 +55,14 @@ runs:
       run: |
         find . -name "terraform-provider-*" -type f -exec chmod +x {} \;
 
+    - name: Create output folder
+      shell: bash
+      run: mkdir -p $GITHUB_WORKSPACE/outputs/${{ inputs.path }}
+
     - name: Debug
       shell: bash
       run: |
-        tree .
+        find . -name ".terragrunt-cache" -type d
 
     - name: Terragrunt Plan
       id: tg_plan
@@ -67,10 +71,11 @@ runs:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
         tg_dir: ${{ inputs.working-directory }}/terraform/environment/${{ inputs.github-environment }}
-        tg_command: 'run-all plan -detailed-exitcode'
+        tg_command: 'run-all plan --terragrunt-out-dir /github/workspace/outputs/terraform/environment/${{ inputs.github-environment }} --terragrunt-json-out-dir /github/workspace/outputs/terraform/environment/${{ inputs.github-environment }} -detailed-exitcode'
       env:
         env_name: ${{ inputs.github-environment }}
-        TERRAGRUNT_DOWNLOAD: "${{ github.workspace }}/${{ inputs.working-directory }}/.terragrunt-cache"
+        TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
+        TERRAGRUNT_DOWNLOAD: "${{ github.workspace }}/.terragrunt-cache"
 
 
     - name: Set Plan Outcome
