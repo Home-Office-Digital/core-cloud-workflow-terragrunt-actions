@@ -55,6 +55,11 @@ runs:
       run: |
         find . -name "terraform-provider-*" -type f -exec chmod +x {} \;
 
+    - name: Debug
+      shell: bash
+      run: |
+        tree .
+
     - name: Terragrunt Plan
       id: tg_plan
       uses: gruntwork-io/terragrunt-action@v2
