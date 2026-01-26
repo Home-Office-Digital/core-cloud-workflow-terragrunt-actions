@@ -61,8 +61,8 @@ runs:
       with:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
-        tg_dir: ${{ inputs.working-directory }}
-        tg_command: 'run-all plan -input=false -out=tfplan -detailed-exitcode'
+        tg_dir: ${{ inputs.working-directory }}/terraform/environment/${{ inputs.github-environment }}
+        tg_command: 'plan -input=false -out=tfplan -detailed-exitcode'
       env:
         env_name: ${{ inputs.github-environment }}
         TERRAGRUNT_DOWNLOAD: "${{ github.workspace }}/${{ inputs.working-directory }}/.terragrunt-cache"
