@@ -113,14 +113,17 @@ jobs:
           working_directory: ${{ inputs.working-directory }}
           tflint_recursive: true
 
-#       - name: Terraform Plan
-#         id: plan
-#         uses: UKHomeOffice/core-cloud-workflow-terraform-actions/actions/plan@main
-#         with:
-#           account_id: ${{ secrets.ACCOUNT_ID }}
-#           github-environment: ${{ inputs.github-environment }}
-#           aws-region: ${{ inputs.aws-region }}
-#           role-to-assume: ${{ inputs.role-to-assume }}
+      - name: Terraform Plan
+        id: plan
+        uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/actions/plan@main
+        with:
+          account_id: ${{ secrets.ACCOUNT_ID }}
+          aws-region: ${{ inputs.aws-region }}
+          github-environment: ${{ inputs.github-environment }}
+          role-to-assume: ${{ inputs.role-to-assume }}
+          terraform-version: ${{ inputs.terraform-version }}
+          terragrunt-version: ${{ inputs.terragrunt-version }}
+          working-directory: ${{ inputs.working-directory }}
 
 #       - name: Terraform Apply
 #         id: apply

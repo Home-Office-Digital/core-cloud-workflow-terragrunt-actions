@@ -1,29 +1,36 @@
-name: "Terraform Plan"
-description: "Run Terraform plan and bootstrap S3 bucket and DynamoDB if they don't exist"
+name: "Terragrunt Plan"
+description: "Runs Terragrunt plan"
 
 inputs:
-  terraform-version:
-    description: 'Terraform version to use'
+  account_id:
+    description: "AWS Account ID"
+    required: true
+  aws-region:
+    description: 'AWS Region for the State Bucket and Resources'
+    default: eu-west-2
     required: false
-    default: '1.7.0'
     type: string
   github-environment:
     description: 'The name of your AWS environment. Create an environment secret called ACCOUNT_ID, also.'
     required: false
     default: 'placeholder'
     type: string
-  aws-region:
-    description: 'AWS Region for the State Bucket and Resources'
-    default: eu-west-2
-    required: false
-    type: string
   role-to-assume:
     description: 'AWS Role name for OIDC'
     required: true
     type: string
-  account_id:
-    description: "AWS Account ID"
-    required: true
+  terraform-version:
+    description: "Terraform version to use"
+    required: false
+    default: "1.7.0"
+  terragrunt-version:
+    description: "Terragrunt version to use"
+    required: false
+    default: "0.59.6"
+  working-directory:
+    description: "Directory of the Terragrunt code"
+    required: false
+    default: "."
 
 runs:
   using: composite
@@ -36,26 +43,54 @@ runs:
         retry-max-attempts: 5
         aws-region: ${{ inputs.aws-region }}
 
-    - name: Download Terraform Folders
+    - name: Download Terragrunt Folders
       uses: actions/download-artifact@v4
       with:
-        name: terraform-files
+        name: terragrunt-files
+        path: ${{ github.workspace }}
 
     - name: Fix Binary Permissions
       shell: bash
       # This restores the +x bit that artifacts strip away
       run: |
-        if [ -d ".terraform/providers" ]; then
-          find .terraform/providers -type f -exec chmod +x {} \;
+        find . -name "terraform-provider-*" -type f -exec chmod +x {} \;
+
+    - name: Terragrunt Plan
+      id: tg_plan
+      uses: gruntwork-io/terragrunt-action@v2
+      with:
+        tf_version: ${{ inputs.terraform-version }}
+        tg_version: ${{ inputs.terragrunt-version }}
+        tg_dir: ${{ inputs.working-directory }}
+        tg_command: 'plan -input=false -out=tfplan -detailed-exitcode'
+      env:
+        env_name: ${{ inputs.github-environment }}
+        TERRAGRUNT_DOWNLOAD: "${{ github.workspace }}/${{ inputs.working-directory }}/.terragrunt-cache"
+
+
+    - name: Set Plan Outcome
+      shell: bash
+      if: always()
+      run: |
+        if [ "${{ steps.tg_plan.outcome }}" == "success" ] || [ "${{ steps.tg_plan.outputs.exit_code }}" == "2" ]; then
+          echo "Plan_Outcome=success" >> $GITHUB_ENV
+          if [ "${{ steps.tg_plan.outputs.exit_code }}" == "2" ]; then
+            echo "Changes_Detected=true" >> $GITHUB_ENV
+          else
+            echo "Changes_Detected=false" >> $GITHUB_ENV
+          fi
+        else
+          echo "Plan_Outcome=failed" >> $GITHUB_ENV
         fi
 
-    - name: Terraform Plan
-      shell: bash
-      run: terraform plan -input=false -out=tfplan
-
-    - name: Upload Plan Binary
+    - name: Upload Plan Artifacts
+      if: env.Plan_Outcome == 'success'
       uses: actions/upload-artifact@v4
       with:
-        name: terraform-plan-file
-        path: tfplan
+        name: terragrunt-plan-file
+        path: |
+          ${{ inputs.working-directory }}/**/tfplan
+          ${{ inputs.working-directory }}/**/.terragrunt-cache/
+          ${{ inputs.working-directory }}/**/.terraform.lock.hcl
+        include-hidden-files: true
         retention-days: 1
