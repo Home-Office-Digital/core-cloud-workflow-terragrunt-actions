@@ -34,12 +34,11 @@ runs:
       shell: bash
       # This restores the +x bit that artifacts strip away
       run: |
-        if [ -d ".terragrunt-cache" ]; then
-          echo "Found .terragrunt-cache, restoring provider permissions..."
-          find . -name "terraform-provider-*" -type f -exec chmod +x {} \;
-        else
-          echo "No .terragrunt-cache found."
-        fi
+        sudo chown -R $USER:$USER ${{ github.workspace }}
+        sudo find ${{ github.workspace }} -type d -exec chmod 755 {} +
+        echo "Searching for provider binaries to fix permissions..."
+        sudo find ${{ github.workspace }} -name "terraform-provider-*" -type f -exec chmod +x {} \;
+        echo "Permissions restoration complete."
 
     - name: Terragrunt Validate
       id: tg_validate

@@ -104,13 +104,20 @@ runs:
       uses: gruntwork-io/terragrunt-action@v2
       env:
         env_name: ${{ inputs.github-environment }}
-        TERRAGRUNT_DOWNLOAD: /github/workspace/.terragrunt-cache
+        TERRAGRUNT_DOWNLOAD: ${{ github.workspace }}/.terragrunt-cache
         TF_PLUGIN_CACHE_DIR: /github/workspace/.terraform.d/plugin-cache
       with:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
         tg_dir: ${{ inputs.working-directory }}
-        tg_command: 'init -input=false --terragrunt-download-dir ${{ github.workspace }}/.terragrunt-cache'
+        tg_command: 'run-all init'
+
+    - name: Fix Permissions
+      shell: bash
+      run: |
+        sudo chown -R $USER:$USER .
+        find . -type d -exec chmod 755 {} +
+        find . -type f -name "terraform-provider-*" -exec chmod +x {} +
 
     - name: Debug
       shell: bash
@@ -123,11 +130,7 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: terragrunt-files
-        path: |
-          .terragrunt-cache/
-          .terraform.d/
-          ${{ inputs.working-directory }}/.terraform/
-          ${{ inputs.working-directory }}/.terraform.lock.hcl
+        path: .
         include-hidden-files: true
         if-no-files-found: error
         retention-days: 1

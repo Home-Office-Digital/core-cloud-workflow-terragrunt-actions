@@ -31,6 +31,10 @@ inputs:
     description: "Directory of the Terragrunt code"
     required: false
     default: "."
+outputs:
+  tg-plan-changes:
+    description: "Whether the plan found infrastructure changes"
+    value: ${{ steps.parse-plan.outputs.tg-plan-changes }}
 
 runs:
   using: composite
@@ -47,22 +51,16 @@ runs:
       uses: actions/download-artifact@v4
       with:
         name: terragrunt-files
-        path: ${{ github.workspace }}
+        path: ${{ inputs.working-directory }}
 
-    - name: Fix Binary Permissions
-      shell: bash
-      # This restores the +x bit that artifacts strip away
-      run: |
-        find . -name "terraform-provider-*" -type f -exec chmod +x {} \;
-
-    - name: Create output folder
-      shell: bash
-      run: mkdir -p $GITHUB_WORKSPACE/outputs/${{ inputs.path }}
-
-    - name: Debug
+    - name: Fix Permissions
       shell: bash
       run: |
-        find . -name ".terragrunt-cache" -type d
+        sudo chown -R $USER:$USER ${{ github.workspace }}
+        sudo find ${{ github.workspace }} -type d -exec chmod 755 {} +
+        echo "Searching for provider binaries to fix permissions..."
+        sudo find ${{ github.workspace }} -name "terraform-provider-*" -type f -exec chmod +x {} \;
+        echo "Permissions restoration complete."
 
     - name: Terragrunt Plan
       id: tg_plan
@@ -70,31 +68,47 @@ runs:
       with:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
-        tg_dir: ${{ inputs.working-directory }}/terraform/environment/${{ inputs.github-environment }}
-        tg_command: 'run-all plan --terragrunt-out-dir /github/workspace/outputs/terraform/environment/${{ inputs.github-environment }} --terragrunt-json-out-dir /github/workspace/outputs/terraform/environment/${{ inputs.github-environment }} -detailed-exitcode'
+        tg_dir: ${{ inputs.working-directory }}
+        tg_command: 'run-all plan'
       env:
         env_name: ${{ inputs.github-environment }}
         TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
-        TERRAGRUNT_DOWNLOAD: "${{ github.workspace }}/.terragrunt-cache"
+        TERRAGRUNT_DOWNLOAD: .terragrunt-cache
 
-
-    - name: Set Plan Outcome
+    - name: Parse Plan Output
       shell: bash
-      if: always()
+      id: parse-plan
       run: |
-        if [ "${{ steps.tg_plan.outcome }}" == "success" ] || [ "${{ steps.tg_plan.outputs.exit_code }}" == "2" ]; then
-          echo "Plan_Outcome=success" >> $GITHUB_ENV
-          if [ "${{ steps.tg_plan.outputs.exit_code }}" == "2" ]; then
-            echo "Changes_Detected=true" >> $GITHUB_ENV
-          else
-            echo "Changes_Detected=false" >> $GITHUB_ENV
-          fi
+        text="$(cat <<'EOF_TEXT'
+        ${{ steps.tg_plan.outputs.tg_action_output }}
+        EOF_TEXT
+        )"
+
+        sub1='Changes to Outputs:'
+        sub2='Plan:'
+
+        if echo "$text" | grep -qF -- "$sub1" || echo "$text" | grep -qF -- "$sub2"; then
+          echo 'Changes detected (based on plan output patterns)'
+          echo "tg-plan-changes=true" >> $GITHUB_OUTPUT
         else
-          echo "Plan_Outcome=failed" >> $GITHUB_ENV
+          echo 'No changes detected in plan output'
+          echo "tg-plan-changes=false" >> $GITHUB_OUTPUT
         fi
 
+    - name: Fix Permissions
+      shell: bash
+      run: |
+        sudo chown -R $USER:$USER .
+        find . -type d -exec chmod 755 {} +
+        find . -type f -name "terraform-provider-*" -exec chmod +x {} +
+
+    - name: Debug
+      shell: bash
+      run: |
+        find . -type d
+
     - name: Upload Plan Artifacts
-      if: env.Plan_Outcome == 'success'
+      if: steps.parse-plan.outputs.tg-plan-changes == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: terragrunt-plan-file
