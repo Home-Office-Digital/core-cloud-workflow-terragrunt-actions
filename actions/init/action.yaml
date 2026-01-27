@@ -119,13 +119,6 @@ runs:
         find . -type d -exec chmod 755 {} +
         find . -type f -name "terraform-provider-*" -exec chmod +x {} +
 
-    - name: Debug
-      shell: bash
-      run: |
-        tree -a .
-        ls -la .terragrunt-cache || echo "Still not in root"
-        ls -la ${{ inputs.working-directory }}/.terragrunt-cache || echo "Not in working dir"
-
     - name: Upload Terragrunt Folders
       uses: actions/upload-artifact@v4
       with:

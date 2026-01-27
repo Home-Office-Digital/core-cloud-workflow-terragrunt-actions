@@ -68,7 +68,7 @@ runs:
       with:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
-        tg_dir: ${{ inputs.working-directory }}
+        tg_dir: ${{ inputs.working-directory }}/${{ inputs.working-directory }}
         tg_command: 'run-all plan'
       env:
         env_name: ${{ inputs.github-environment }}
@@ -101,11 +101,6 @@ runs:
         sudo chown -R $USER:$USER .
         find . -type d -exec chmod 755 {} +
         find . -type f -name "terraform-provider-*" -exec chmod +x {} +
-
-    - name: Debug
-      shell: bash
-      run: |
-        find . -type d
 
     - name: Upload Plan Artifacts
       if: steps.parse-plan.outputs.tg-plan-changes == 'true'
