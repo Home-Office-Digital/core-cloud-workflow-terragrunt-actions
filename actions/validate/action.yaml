@@ -23,23 +23,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Download Terragrunt Cache
-      uses: actions/download-artifact@v4
-      continue-on-error: true
-      with:
-        name: terragrunt-files
-        path: ${{ inputs.working-directory }}
-
-    - name: Fix Binary Permissions
-      shell: bash
-      # This restores the +x bit that artifacts strip away
-      run: |
-        sudo chown -R $USER:$USER ${{ github.workspace }}
-        sudo find ${{ github.workspace }} -type d -exec chmod 755 {} +
-        echo "Searching for provider binaries to fix permissions..."
-        sudo find ${{ github.workspace }} -name "terraform-provider-*" -type f -exec chmod +x {} \;
-        echo "Permissions restoration complete."
-
     - name: Terragrunt Validate
       id: tg_validate
       uses: gruntwork-io/terragrunt-action@v2
@@ -47,10 +30,11 @@ runs:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
         tg_dir: ${{ inputs.working-directory }}
-        tg_command: 'validate'
+        tg_command: 'run-all validate'
       env:
         env_name: ${{ inputs.github-environment }}
-        TERRAGRUNT_DOWNLOAD: .terragrunt-cache
+        TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
+        TERRAGRUNT_DOWNLOAD: ${{ github.workspace }}/.terragrunt-cache
 
     - name: Capture and Decode Output
       shell: bash

@@ -49,37 +49,15 @@ runs:
         retry-max-attempts: 5
         aws-region: ${{ inputs.aws-region }}
 
-    - name: Download Plan Binary
-      uses: actions/download-artifact@v4
-      with:
-        name: terragrunt-plan-files
-        path: .
-
-    - name: Fix Permissions
-      shell: bash
-      run: |
-        sudo chown -R $USER:$USER ${{ github.workspace }}
-        sudo find ${{ github.workspace }} -type d -exec chmod 755 {} +
-        echo "Searching for provider binaries to fix permissions..."
-        sudo find ${{ github.workspace }} -name "terraform-provider-*" -type f -exec chmod +x {} \;
-        echo "Permissions restoration complete."
-
-    - name: Fix Binary Permissions
-      shell: bash
-      run: |
-        if [ -d ".terraform/providers" ]; then
-          find .terraform/providers -type f -exec chmod +x {} \;
-        fi
-
-    - name: Debug File Structure
-      shell: bash
-      run: find ${{ inputs.working-directory }} -name "tfplan"
-
     - name: Run Terragrunt Apply for All Users
       id: apply
       uses: gruntwork-io/terragrunt-action@v2
       with:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
-        tg_dir: ${{ inputs.working-directory }}/${{ inputs.working-directory }}
+        tg_dir: ${{ inputs.working-directory }}
         tg_command: 'run-all apply tfplan'
+      env:
+        env_name: ${{ inputs.github-environment }}
+        TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
+        TERRAGRUNT_DOWNLOAD: ${{ github.workspace }}/.terragrunt-cache

@@ -47,21 +47,6 @@ runs:
         retry-max-attempts: 5
         aws-region: ${{ inputs.aws-region }}
 
-    - name: Download Terragrunt Folders
-      uses: actions/download-artifact@v4
-      with:
-        name: terragrunt-files
-        path: .
-
-    - name: Fix Permissions
-      shell: bash
-      run: |
-        sudo chown -R $USER:$USER ${{ github.workspace }}
-        sudo find ${{ github.workspace }} -type d -exec chmod 755 {} +
-        echo "Searching for provider binaries to fix permissions..."
-        sudo find ${{ github.workspace }} -name "terraform-provider-*" -type f -exec chmod +x {} \;
-        echo "Permissions restoration complete."
-
     - name: Terragrunt Plan
       id: tg_plan
       uses: gruntwork-io/terragrunt-action@v2
@@ -69,11 +54,11 @@ runs:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
         tg_dir: ${{ inputs.working-directory }}
-        tg_command: 'run-all plan -out=tfplan=${get_terragrunt_dir()}/tfplan'
+        tg_command: 'run-all plan -out=tfplan'
       env:
         env_name: ${{ inputs.github-environment }}
         TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
-        TERRAGRUNT_DOWNLOAD: .terragrunt-cache
+        TERRAGRUNT_DOWNLOAD: ${{ github.workspace }}/.terragrunt-cache
 
     - name: Parse Plan Output
       shell: bash
@@ -94,20 +79,3 @@ runs:
           echo 'No changes detected in plan output'
           echo "tg-plan-changes=false" >> $GITHUB_OUTPUT
         fi
-
-    - name: Fix Permissions
-      shell: bash
-      run: |
-        sudo chown -R $USER:$USER .
-        find . -type d -exec chmod 755 {} +
-        find . -type f -name "terraform-provider-*" -exec chmod +x {} +
-
-    - name: Upload Plan Artifacts
-      if: steps.parse-plan.outputs.tg-plan-changes == 'true'
-      uses: actions/upload-artifact@v4
-      with:
-        name: terragrunt-plan-files
-        path: |
-          ${{ inputs.working-directory }}/**/tfplan
-          ${{ inputs.working-directory }}/**/.terraform.lock.hcl
-        retention-days: 1

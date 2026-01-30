@@ -111,19 +111,3 @@ runs:
         tg_version: ${{ inputs.terragrunt-version }}
         tg_dir: ${{ inputs.working-directory }}
         tg_command: 'run-all init'
-
-    - name: Fix Permissions
-      shell: bash
-      run: |
-        sudo chown -R $USER:$USER .
-        find . -type d -exec chmod 755 {} +
-        find . -type f -name "terraform-provider-*" -exec chmod +x {} +
-
-    - name: Upload Terragrunt Folders
-      uses: actions/upload-artifact@v4
-      with:
-        name: terragrunt-files
-        path: .
-        include-hidden-files: true
-        if-no-files-found: error
-        retention-days: 1
