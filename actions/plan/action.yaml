@@ -51,7 +51,7 @@ runs:
       uses: actions/download-artifact@v4
       with:
         name: terragrunt-files
-        path: ${{ inputs.working-directory }}
+        path: .
 
     - name: Fix Permissions
       shell: bash
@@ -68,8 +68,8 @@ runs:
       with:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
-        tg_dir: ${{ inputs.working-directory }}/${{ inputs.working-directory }}
-        tg_command: 'run-all plan -out=tfplan'
+        tg_dir: ${{ inputs.working-directory }}
+        tg_command: 'run-all plan -out=tfplan=${get_terragrunt_dir()}/tfplan'
       env:
         env_name: ${{ inputs.github-environment }}
         TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
@@ -110,5 +110,4 @@ runs:
         path: |
           ${{ inputs.working-directory }}/**/tfplan
           ${{ inputs.working-directory }}/**/.terraform.lock.hcl
-        include-hidden-files: true
         retention-days: 1

@@ -53,7 +53,7 @@ runs:
       uses: actions/download-artifact@v4
       with:
         name: terragrunt-plan-files
-        path: ${{ inputs.working-directory }}
+        path: .
 
     - name: Fix Permissions
       shell: bash
