@@ -20,31 +20,30 @@ and a complete [Terragrunt workflow file](https://github.com/UKHomeOffice/core-c
 
 
 ## Usage of complete workflow file
-  name: "Test Terragrunt Actions Pipeline"
+    name: "Test Terragrunt Actions Pipeline"
 
-  on:
-   push:
-      branches:
-        - main
+    on:
+      push:
+        branches: [ main ]
 
-  permissions:
-    contents: read
-    id-token: write
-    actions: read
-    security-events: write
-    pull-requests: write
+    permissions:
+      contents: read
+      id-token: write
+      actions: read
+      security-events: write
+      pull-requests: write
 
-jobs:
-  <JOB_NAME>:
-    uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/.github/workflows/standard-pipeline.yml@main
-    with:
-      github-environment: '<GITHUB_ENVIRONMENT_NAME>'
-      state-bucket: '<DESIRED_NAME_OF_S3_BUCKET_FOR_STORING_STATE_FILES>'
-      state-dynamodb-table: '<DESIRED_DYNAMODB_TABLE_NAME>'
-      role-to-assume: '<AWS_ROLE_THAT_HAS_PERMISSIONS_TO_CREATE_AND_DESTROY_RESOURCES>'
-      working-directory: '.'
-    secrets:
-      account_id: ${{ secrets.ACCOUNT_ID }}
+    jobs:
+      <JOB_NAME>:
+        uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/.github/workflows/standard-pipeline.yml@main
+        with:
+          github-environment: '<GITHUB_ENVIRONMENT_NAME>'
+          state-bucket: '<DESIRED_NAME_OF_S3_BUCKET_FOR_STORING_STATE_FILES>'
+          state-dynamodb-table: '<DESIRED_DYNAMODB_TABLE_NAME>'
+          role-to-assume: '<AWS_ROLE_THAT_HAS_PERMISSIONS_TO_CREATE_AND_DESTROY_RESOURCES>'
+          working-directory: '.'
+        secrets:
+          account_id: ${{ secrets.ACCOUNT_ID }}
 
 Craete a workflow file in your `.github/workflows` directory and populate with the following, changing inputs and config as needed.
 
