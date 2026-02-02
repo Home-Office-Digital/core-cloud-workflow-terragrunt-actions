@@ -123,15 +123,6 @@ jobs:
           terraform-version: ${{ inputs.terraform-version }}
           terragrunt-version: ${{ inputs.terragrunt-version }}
 
-# # TODO: TFLint is not part of the official terraform CLI and is more complex. Suggest keeping that in separate repo and pointing to it here, with the ability to disable
-      - name: TFLint
-        id: tflint
-        if: success() || failure()
-        uses: UKHomeOffice/core-cloud-workflow-tflint-scan@fallback-plugin
-        with:
-          working_directory: ${{ inputs.working-directory }}
-          tflint_recursive: true
-
       - name: Terragrunt Plan
         id: plan
         uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/actions/plan@main
