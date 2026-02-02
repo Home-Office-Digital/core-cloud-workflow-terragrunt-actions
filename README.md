@@ -18,6 +18,7 @@ and a complete [Terragrunt workflow file](https://github.com/UKHomeOffice/core-c
 - If absent, the `terragrunt run-all init` fragment will bootstrap your defined state bucket and DynamoDB table for the relevant environment.
 - A customised Github Actions summary page that provides at-a-glance debugging features and current configuration used without needing to delve into the steps or files.
 
+  <img width="1192" height="1257" alt="Screenshot 2026-02-02 at 16 34 00" src="https://github.com/user-attachments/assets/7134a6af-d605-4a45-bf0e-4ce197eeb00a" />
 
 ## Usage of complete workflow file
     name: "Test Terragrunt Actions Pipeline"
