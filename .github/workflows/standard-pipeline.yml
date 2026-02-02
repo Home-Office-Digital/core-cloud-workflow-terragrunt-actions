@@ -130,7 +130,7 @@ jobs:
         uses: UKHomeOffice/core-cloud-workflow-tflint-scan@fallback-plugin
         with:
           working_directory: ${{ inputs.working-directory }}
-          tflint_recursive: false
+          tflint_recursive: true
 
       - name: Terragrunt Plan
         id: plan

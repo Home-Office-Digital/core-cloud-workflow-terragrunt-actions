@@ -104,8 +104,8 @@ runs:
       uses: gruntwork-io/terragrunt-action@v2
       env:
         env_name: ${{ inputs.github-environment }}
+        TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
         TERRAGRUNT_DOWNLOAD: ${{ github.workspace }}/.terragrunt-cache
-        TF_PLUGIN_CACHE_DIR: /github/workspace/.terraform.d/plugin-cache
       with:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
