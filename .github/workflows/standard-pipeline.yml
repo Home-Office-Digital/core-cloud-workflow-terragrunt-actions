@@ -137,7 +137,7 @@ jobs:
 
       - name: Terragrunt Apply
         id: apply
-        if: github.ref_name == inputs.apply-branch
+        if: steps.plan.outputs.tg-plan-changes == 'true' && github.ref_name == inputs.apply-branch
         uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/actions/apply@main
         with:
           account_id: ${{ secrets.ACCOUNT_ID }}

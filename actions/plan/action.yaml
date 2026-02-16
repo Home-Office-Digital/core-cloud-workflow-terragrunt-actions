@@ -1,5 +1,5 @@
 name: "Terragrunt Plan"
-description: "Runs Terragrunt plan and uploads plan files as artifacts for the apply step"
+description: "Runs terragrunt run-all plan."
 
 inputs:
   account_id:

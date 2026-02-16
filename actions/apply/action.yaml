@@ -1,5 +1,5 @@
 name: "Terragrunt Apply"
-description: "Downloads the plan file arifacts and applies them"
+description: "Runs terragrunt run-all apply"
 
 inputs:
   account_id:
