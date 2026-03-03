@@ -46,6 +46,11 @@ on:
         required: false
         default: '0.59.6'
         type: string
+      upload-plans:
+        description: 'Ability to upload tfplan files as artifacts (e.g. for scanning purposes)'
+        required: false
+        default: 'false'
+        type: string
       working-directory:
         description: 'Directory containing main.tf'
         required: false
@@ -133,6 +138,7 @@ jobs:
           role-to-assume: ${{ inputs.role-to-assume }}
           terraform-version: ${{ inputs.terraform-version }}
           terragrunt-version: ${{ inputs.terragrunt-version }}
+          upload-plans: ${{ inputs.upload-plans }}
           working-directory: ${{ inputs.working-directory }}
 
       - name: Terragrunt Apply
