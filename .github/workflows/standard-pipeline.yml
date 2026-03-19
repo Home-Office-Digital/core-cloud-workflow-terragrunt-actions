@@ -82,7 +82,7 @@ jobs:
 
       - name: Terragrunt Init
         id: init
-        uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/actions/init@main
+        uses: Home-Office-Digital/core-cloud-workflow-terragrunt-actions/actions/init@main
         with:
           account_id: ${{ secrets.ACCOUNT_ID }}
           aws-region: ${{ inputs.aws-region }}
@@ -109,14 +109,14 @@ jobs:
 
       - name: Terragrunt Fmt
         id: fmt
-        uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/actions/fmt@main
+        uses: Home-Office-Digital/core-cloud-workflow-terragrunt-actions/actions/fmt@main
         with:
           working-directory: ${{ inputs.working-directory }}
 
       - name: Terragrunt Validate
         id: validate
         if: success() || failure()
-        uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/actions/validate@main
+        uses: Home-Office-Digital/core-cloud-workflow-terragrunt-actions/actions/validate@main
         with:
           github-environment: ${{ inputs.github-environment }}
           working-directory: ${{ inputs.working-directory }}
@@ -125,7 +125,7 @@ jobs:
 
       - name: Terragrunt Plan
         id: plan
-        uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/actions/plan@main
+        uses: Home-Office-Digital/core-cloud-workflow-terragrunt-actions/actions/plan@main
         with:
           account_id: ${{ secrets.ACCOUNT_ID }}
           aws-region: ${{ inputs.aws-region }}
@@ -138,7 +138,7 @@ jobs:
       - name: Terragrunt Apply
         id: apply
         if: steps.plan.outputs.tg-plan-changes == 'true' && github.ref_name == inputs.apply-branch
-        uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/actions/apply@main
+        uses: Home-Office-Digital/core-cloud-workflow-terragrunt-actions/actions/apply@main
         with:
           account_id: ${{ secrets.ACCOUNT_ID }}
           apply-branch: ${{ inputs.apply-branch }}

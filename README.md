@@ -8,7 +8,7 @@ This repository contains composite actions for individual terragrunt command fra
 - `terragrunt run-all plan`
 - `terragrunt run-all apply`
 
-and a complete [Terragrunt workflow file](https://github.com/UKHomeOffice/core-cloud-workflow-terragrunt-actions/blob/main/.github/workflows/standard-pipeline.yml) when you just want to use a complete Terragrunt pipeline.
+and a complete [Terragrunt workflow file](https://github.com/Home-Office-Digital/core-cloud-workflow-terragrunt-actions/blob/main/.github/workflows/standard-pipeline.yml) when you just want to use a complete Terragrunt pipeline.
 
 ## Pre-requisites
 1. Create a Github Environment.
@@ -36,7 +36,7 @@ and a complete [Terragrunt workflow file](https://github.com/UKHomeOffice/core-c
 
     jobs:
       <JOB_NAME>:
-        uses: UKHomeOffice/core-cloud-workflow-terragrunt-actions/.github/workflows/standard-pipeline.yml@main
+        uses: Home-Office-Digital/core-cloud-workflow-terragrunt-actions/.github/workflows/standard-pipeline.yml@main
         with:
           github-environment: '<GITHUB_ENVIRONMENT_NAME>'
           state-bucket: '<DESIRED_NAME_OF_S3_BUCKET_FOR_STORING_STATE_FILES>'
@@ -49,4 +49,4 @@ and a complete [Terragrunt workflow file](https://github.com/UKHomeOffice/core-c
 Craete a workflow file in your `.github/workflows` directory and populate with the following, changing inputs and config as needed.
 
 ## Usage of composite actions
-Please refer to the [Terragrunt workflow file](https://github.com/UKHomeOffice/core-cloud-workflow-terragrunt-actions/blob/main/.github/workflows/standard-pipeline.yml) for examples of using composite actions.
+Please refer to the [Terragrunt workflow file](https://github.com/Home-Office-Digital/core-cloud-workflow-terragrunt-actions/blob/main/.github/workflows/standard-pipeline.yml) for examples of using composite actions.
