@@ -61,8 +61,9 @@ runs:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
         tg_dir: ${{ inputs.working-directory }}
-        tg_command: 'run-all apply tfplan --terragrunt-parallelism ${{ inputs.terragrunt-parallelism }}'
+        tg_command: 'run-all apply tfplan'
       env:
         env_name: ${{ inputs.github-environment }}
         TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
         TERRAGRUNT_DOWNLOAD: ${{ github.workspace }}/.terragrunt-cache
+        TG_PARALLELISM: ${{ inputs.terragrunt-parallelism }}
