@@ -15,6 +15,11 @@ inputs:
     description: "Terragrunt version to use"
     required: false
     default: "0.59.6"
+  terragrunt-parallelism:
+    description: 'Max number of concurrent Terragrunt modules'
+    required: false
+    default: '4'
+    type: string
   working-directory:
     description: "Directory of the Terragrunt code"
     required: false
@@ -30,7 +35,7 @@ runs:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
         tg_dir: ${{ inputs.working-directory }}
-        tg_command: 'run-all validate'
+        tg_command: 'run-all validate --terragrunt-parallelism ${{ inputs.terragrunt-parallelism }}'
       env:
         env_name: ${{ inputs.github-environment }}
         TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
