@@ -157,3 +157,31 @@ jobs:
           terragrunt-version: ${{ inputs.terragrunt-version }}
           terragrunt-parallelism: ${{ inputs.terragrunt-parallelism }}
           working-directory: ${{ inputs.working-directory }}
+
+      - name: Terragrunt Destroy Plan
+        id: destroy-plan
+        uses: Home-Office-Digital/core-cloud-workflow-terragrunt-actions/actions/destroy-plan@main
+        with:
+          account_id: ${{ secrets.ACCOUNT_ID }}
+          aws-region: ${{ inputs.aws-region }}
+          github-environment: ${{ inputs.github-environment }}
+          role-to-assume: ${{ inputs.role-to-assume }}
+          terraform-version: ${{ inputs.terraform-version }}
+          terragrunt-version: ${{ inputs.terragrunt-version }}
+          terragrunt-parallelism: ${{ inputs.terragrunt-parallelism }}
+          working-directory: ${{ inputs.working-directory }}
+
+      - name: Terragrunt Destroy Apply
+        id: destroy-apply
+        if: steps.destroy-plan.outputs.tg-destroy-plan-changes == 'true' && github.ref_name == inputs.apply-branch
+        uses: Home-Office-Digital/core-cloud-workflow-terragrunt-actions/actions/destroy-apply@main
+        with:
+          account_id: ${{ secrets.ACCOUNT_ID }}
+          apply-branch: ${{ inputs.apply-branch }}
+          aws-region: ${{ inputs.aws-region }}
+          github-environment: ${{ inputs.github-environment }}
+          role-to-assume: ${{ inputs.role-to-assume }}
+          terraform-version: ${{ inputs.terraform-version }}
+          terragrunt-version: ${{ inputs.terragrunt-version }}
+          terragrunt-parallelism: ${{ inputs.terragrunt-parallelism }}
+          working-directory: ${{ inputs.working-directory }}
