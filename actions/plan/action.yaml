@@ -27,6 +27,11 @@ inputs:
     description: "Terragrunt version to use"
     required: false
     default: "0.59.6"
+  terragrunt-parallelism:
+    description: 'Max number of concurrent Terragrunt modules'
+    required: false
+    default: '4'
+    type: string
   working-directory:
     description: "Directory of the Terragrunt code"
     required: false
@@ -59,6 +64,7 @@ runs:
         env_name: ${{ inputs.github-environment }}
         TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
         TERRAGRUNT_DOWNLOAD: ${{ github.workspace }}/.terragrunt-cache
+        TG_PARALLELISM: ${{ inputs.terragrunt-parallelism }}
 
     - name: Parse Plan Output
       shell: bash

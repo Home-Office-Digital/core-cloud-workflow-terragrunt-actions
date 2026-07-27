@@ -46,6 +46,11 @@ on:
         required: false
         default: '0.59.6'
         type: string
+      terragrunt-parallelism:
+        description: 'Max number of concurrent Terragrunt modules'
+        required: false
+        default: '4'
+        type: string
       working-directory:
         description: 'Directory containing main.tf'
         required: false
@@ -93,6 +98,7 @@ jobs:
           state-key: ${{ inputs.state-key }}
           terraform-version: ${{ inputs.terraform-version }}
           terragrunt-version: ${{ inputs.terragrunt-version }}
+          terragrunt-parallelism: ${{ inputs.terragrunt-parallelism }}
           working-directory: ${{ inputs.working-directory }}
 
       - name: Fix Permissions for Runner
@@ -122,6 +128,7 @@ jobs:
           working-directory: ${{ inputs.working-directory }}
           terraform-version: ${{ inputs.terraform-version }}
           terragrunt-version: ${{ inputs.terragrunt-version }}
+          terragrunt-parallelism: ${{ inputs.terragrunt-parallelism }}
 
       - name: Terragrunt Plan
         id: plan
@@ -133,6 +140,7 @@ jobs:
           role-to-assume: ${{ inputs.role-to-assume }}
           terraform-version: ${{ inputs.terraform-version }}
           terragrunt-version: ${{ inputs.terragrunt-version }}
+          terragrunt-parallelism: ${{ inputs.terragrunt-parallelism }}
           working-directory: ${{ inputs.working-directory }}
 
       - name: Terragrunt Apply
@@ -147,4 +155,5 @@ jobs:
           role-to-assume: ${{ inputs.role-to-assume }}
           terraform-version: ${{ inputs.terraform-version }}
           terragrunt-version: ${{ inputs.terragrunt-version }}
+          terragrunt-parallelism: ${{ inputs.terragrunt-parallelism }}
           working-directory: ${{ inputs.working-directory }}

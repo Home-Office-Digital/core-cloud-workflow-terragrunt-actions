@@ -43,6 +43,11 @@ inputs:
     required: false
     default: '0.59.6'
     type: string
+  terragrunt-parallelism:
+    description: 'Max number of concurrent Terragrunt modules'
+    required: false
+    default: '4'
+    type: string
   working-directory:
     description: 'Directory containing main.tf'
     required: false
@@ -106,6 +111,7 @@ runs:
         env_name: ${{ inputs.github-environment }}
         TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
         TERRAGRUNT_DOWNLOAD: ${{ github.workspace }}/.terragrunt-cache
+        TG_PARALLELISM: ${{ inputs.terragrunt-parallelism }}
       with:
         tf_version: ${{ inputs.terraform-version }}
         tg_version: ${{ inputs.terragrunt-version }}
