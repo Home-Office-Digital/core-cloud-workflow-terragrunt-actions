@@ -50,3 +50,6 @@ Craete a workflow file in your `.github/workflows` directory and populate with t
 
 ## Usage of composite actions
 Please refer to the [Terragrunt workflow file](https://github.com/Home-Office-Digital/core-cloud-workflow-terragrunt-actions/blob/main/.github/workflows/standard-pipeline.yml) for examples of using composite actions.
+
+## Additional configuration
+The 'terragrunt-parallelism' input can be used to restrict the number of concurrent operations that the runner will execute. Reduce if your pipeline becomes unstable due to resource exhaustion.
