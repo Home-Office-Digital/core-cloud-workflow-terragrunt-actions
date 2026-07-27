@@ -1,0 +1,136 @@
+name: "Terragrunt Destroy Plan"
+description: "Plans the destruction of any units listed in the .deletions manifest file, without touching the rest of the tree."
+
+inputs:
+  account_id:
+    description: "AWS Account ID"
+    required: true
+  aws-region:
+    description: 'AWS Region for the State Bucket and Resources'
+    default: eu-west-2
+    required: false
+    type: string
+  github-environment:
+    description: 'The name of your AWS environment. Create an environment secret called ACCOUNT_ID, also.'
+    required: false
+    default: 'placeholder'
+    type: string
+  role-to-assume:
+    description: 'AWS Role name for OIDC'
+    required: true
+    type: string
+  terraform-version:
+    description: "Terraform version to use"
+    required: false
+    default: "1.7.0"
+  terragrunt-version:
+    description: "Terragrunt version to use"
+    required: false
+    default: "0.59.6"
+  terragrunt-parallelism:
+    description: 'Max number of concurrent Terragrunt modules'
+    required: false
+    default: '4'
+    type: string
+  working-directory:
+    description: "Directory of the Terragrunt code"
+    required: false
+    default: "."
+
+outputs:
+  tg-destroy-plan-changes:
+    description: "Whether any units are queued for destruction"
+    value: ${{ steps.parse-plan.outputs.tg-destroy-plan-changes }}
+
+runs:
+  using: composite
+  steps:
+    - name: Read .deletions Manifest
+      id: manifest
+      shell: bash
+      env:
+        WORKING_DIRECTORY: ${{ inputs.working-directory }}
+      run: |
+        DELETIONS_FILE="$WORKING_DIRECTORY/.deletions"
+
+        if [ ! -s "$DELETIONS_FILE" ]; then
+          echo "No .deletions file found (or it is empty) at $DELETIONS_FILE - nothing to destroy."
+          echo "has-deletions=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        include_args=()
+        while IFS= read -r dir || [ -n "$dir" ]; do
+          dir="$(echo "$dir" | xargs)"
+          [ -z "$dir" ] && continue
+          [[ "$dir" == \#* ]] && continue
+
+          if [ ! -d "$dir" ]; then
+            echo "::error::Directory '$dir' listed in .deletions does not exist. Leave the unit's terragrunt.hcl in place until it has been destroyed - the pipeline removes it from the plan/apply for you."
+            exit 1
+          fi
+
+          rel_dir="${dir#"$WORKING_DIRECTORY"/}"
+          include_args+=(--terragrunt-include-dir "$rel_dir")
+        done < "$DELETIONS_FILE"
+
+        if [ "${#include_args[@]}" -eq 0 ]; then
+          echo "has-deletions=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        echo "has-deletions=true" >> "$GITHUB_OUTPUT"
+        {
+          echo "tg-command<<EOF_CMD"
+          echo "run-all plan -destroy --terragrunt-strict-include ${include_args[*]} -out=destroy.tfplan"
+          echo "EOF_CMD"
+        } >> "$GITHUB_OUTPUT"
+
+    - uses: aws-actions/configure-aws-credentials@v4
+      name: Configure AWS IdP Credentials
+      if: steps.manifest.outputs.has-deletions == 'true'
+      with:
+        role-to-assume: arn:aws:iam::${{ inputs.account_id }}:role/${{ inputs.role-to-assume }}
+        role-session-name: GitHubActions
+        retry-max-attempts: 5
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Terragrunt Destroy Plan
+      id: tg_destroy_plan
+      if: steps.manifest.outputs.has-deletions == 'true'
+      uses: gruntwork-io/terragrunt-action@v2
+      with:
+        tf_version: ${{ inputs.terraform-version }}
+        tg_version: ${{ inputs.terragrunt-version }}
+        tg_dir: ${{ inputs.working-directory }}
+        tg_command: ${{ steps.manifest.outputs.tg-command }}
+      env:
+        env_name: ${{ inputs.github-environment }}
+        TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
+        TERRAGRUNT_DOWNLOAD: ${{ github.workspace }}/.terragrunt-cache
+        TG_PARALLELISM: ${{ inputs.terragrunt-parallelism }}
+
+    - name: Parse Destroy Plan Output
+      shell: bash
+      id: parse-plan
+      run: |
+        if [ "${{ steps.manifest.outputs.has-deletions }}" != "true" ]; then
+          echo "tg-destroy-plan-changes=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        text="$(cat <<'EOF_TEXT'
+        ${{ steps.tg_destroy_plan.outputs.tg_action_output }}
+        EOF_TEXT
+        )"
+
+        sub1='Changes to Outputs:'
+        sub2='Plan:'
+
+        if echo "$text" | grep -qF -- "$sub1" || echo "$text" | grep -qF -- "$sub2"; then
+          echo 'Destroy changes detected'
+          echo "tg-destroy-plan-changes=true" >> "$GITHUB_OUTPUT"
+        else
+          echo 'No destroy changes detected'
+          echo "tg-destroy-plan-changes=false" >> "$GITHUB_OUTPUT"
+        fi

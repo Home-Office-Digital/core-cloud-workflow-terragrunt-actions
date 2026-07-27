@@ -7,6 +7,7 @@ This repository contains composite actions for individual terragrunt command fra
 - `terragrunt run-all validate`
 - `terragrunt run-all plan`
 - `terragrunt run-all apply`
+- `terragrunt run-all plan -destroy` / `terragrunt run-all apply` for units listed in a `.deletions` manifest
 
 and a complete [Terragrunt workflow file](https://github.com/Home-Office-Digital/core-cloud-workflow-terragrunt-actions/blob/main/.github/workflows/standard-pipeline.yml) when you just want to use a complete Terragrunt pipeline.
 
@@ -47,6 +48,19 @@ and a complete [Terragrunt workflow file](https://github.com/Home-Office-Digital
           account_id: ${{ secrets.ACCOUNT_ID }}
 
 Craete a workflow file in your `.github/workflows` directory and populate with the following, changing inputs and config as needed.
+
+## Deleting resources
+Deleting a resource's `terragrunt.hcl` file doesn't work as `run-all` only visits directories that still exist, so a removed file would just silently skip over it, rather than deleting resources.
+
+Instead, add the full path of the resource you want destroyed to a `.deletions` file at the root of the environment directory, and leave the resource's `terragrunt.hcl` in place:
+
+```bash
+echo "terraform/environment/sandbox-ops-tooling/rds/test-terragrunt-1" > terraform/environment/sandbox-ops-tooling/.deletions
+```
+
+Once a resource has been destroyed, remove its directory and its entry in `.deletions` in a follow-up commit - the pipeline does not do this for you.
+
+Note: `.deletions` only destroys whole resources. This is exactly what you want when a resource holds a single resource. If a module manages several resources, e.g. the [core-cloud-rds-tf-module](https://github.com/Home-Office-Digital/core-cloud-rds-tf-module) can hold several instances under one `instances` map), remove one entry from the map can be destroyed via a normal plan-apply, as the `terragrunt.hcl` file will still exist. If it's just got the one instance, then just add to the `.deletions` file like normal.
 
 ## Usage of composite actions
 Please refer to the [Terragrunt workflow file](https://github.com/Home-Office-Digital/core-cloud-workflow-terragrunt-actions/blob/main/.github/workflows/standard-pipeline.yml) for examples of using composite actions.
