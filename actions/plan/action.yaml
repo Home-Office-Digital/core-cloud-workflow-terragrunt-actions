@@ -36,10 +36,18 @@ inputs:
     description: "Directory of the Terragrunt code"
     required: false
     default: "."
+  enable-checkov-scan:
+    description: "Set to 'true' to additionally export a JSON plan representation for Checkov to scan"
+    required: false
+    default: 'false'
+    type: string
 outputs:
   tg-plan-changes:
     description: "Whether the plan found infrastructure changes"
     value: ${{ steps.parse-plan.outputs.tg-plan-changes }}
+  plan-output-dir:
+    description: "Directory containing the JSON plan representation for Checkov to scan (only populated when enable-checkov-scan is 'true')"
+    value: ${{ github.workspace }}/outputs/${{ inputs.working-directory }}
 
 runs:
   using: composite
@@ -65,6 +73,7 @@ runs:
         TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
         TERRAGRUNT_DOWNLOAD: ${{ github.workspace }}/.terragrunt-cache
         TG_PARALLELISM: ${{ inputs.terragrunt-parallelism }}
+        TERRAGRUNT_JSON_OUT_DIR: ${{ inputs.enable-checkov-scan == 'true' && format('/github/workspace/outputs/{0}', inputs.working-directory) || '' }}
 
     - name: Parse Plan Output
       shell: bash
