@@ -22,6 +22,11 @@ on:
         description: 'AWS Role name for OIDC'
         required: true
         type: string
+      runner:
+        description: 'Runner label(s) to run the pipeline job on, e.g. a self-hosted runner label'
+        required: false
+        default: 'ubuntu-latest'
+        type: string
       state-bucket:
         description: 'Name of the S3 bucket for Terraform State'
         required: true
@@ -81,7 +86,7 @@ permissions:
 jobs:
   terragrunt-standard-pipeline:
     name: "Terragrunt Standard Pipeline"
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     environment: ${{ inputs.github-environment }}
 
     permissions:

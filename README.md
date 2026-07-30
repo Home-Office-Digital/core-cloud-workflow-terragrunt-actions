@@ -67,3 +67,5 @@ Please refer to the [Terragrunt workflow file](https://github.com/Home-Office-Di
 
 ## Additional configuration
 The 'terragrunt-parallelism' input can be used to restrict the number of concurrent operations that the runner will execute. Reduce if your pipeline becomes unstable due to resource exhaustion.
+
+The 'runner' input can be used to run the pipeline job on a specific runner label (e.g. a self-hosted or larger GitHub-hosted runner) instead of the default `ubuntu-latest`.
