@@ -56,14 +56,27 @@ on:
         required: false
         default: '.'
         type: string
+      enable-checkov-scan:
+        description: 'Set to true to scan the generated tfplan with Checkov between Plan and Apply'
+        required: false
+        default: false
+        type: boolean
     secrets:
       account_id:
         required: true
+      EXEMPTIONS_APP_ID:
+        description: Exemptions secret applied by the Core Cloud team when exceptions are approved and required.
+        required: false
+      EXEMPTIONS_APP_PRIVATE_KEY:
+        description: Exemptions secret applied by the Core Cloud team when exceptions are approved and required.
+        required: false
 
 permissions:
   contents: read
   pull-requests: write
   id-token: write
+  security-events: write
+  actions: read
 
 jobs:
   terragrunt-standard-pipeline:
@@ -75,6 +88,8 @@ jobs:
       contents: read
       pull-requests: write
       id-token: write
+      security-events: write
+      actions: read
 
     outputs:
       result: ${{ steps.fmt.outcome }}
@@ -142,6 +157,26 @@ jobs:
           terragrunt-version: ${{ inputs.terragrunt-version }}
           terragrunt-parallelism: ${{ inputs.terragrunt-parallelism }}
           working-directory: ${{ inputs.working-directory }}
+          enable-checkov-scan: ${{ inputs.enable-checkov-scan }}
+
+      - name: Fix Permissions for Runner
+        if: inputs.enable-checkov-scan == true
+        shell: bash
+        run: sudo chown -R $USER:$USER .
+
+      - name: Checkov Scan (Plan Files)
+        id: checkov
+        if: inputs.enable-checkov-scan == true
+        uses: Home-Office-Digital/core-cloud-workflow-checkov-sast-scan/actions/tfplan@main
+        with:
+          plan_role: ''
+          existing-plan-dir: ${{ steps.plan.outputs.plan-output-dir }}
+          path: ${{ inputs.working-directory }}
+          env_name: ${{ inputs.github-environment }}
+          account_id: ${{ secrets.ACCOUNT_ID }}
+          TF_VAR_source-repo: "${{ github.server_url }}/${{ github.repository }}"
+          EXEMPTIONS_APP_ID: ${{ secrets.EXEMPTIONS_APP_ID }}
+          EXEMPTIONS_APP_PRIVATE_KEY: ${{ secrets.EXEMPTIONS_APP_PRIVATE_KEY }}
 
       - name: Terragrunt Apply
         id: apply
