@@ -19,7 +19,7 @@ Both sync jobs run on every trigger, in parallel and independently.
 | GHES owner (org)   | `home-office-sandbox`                                       | `Home-Office-Test`                                             |
 | Destination repo   | `core-cloud-workflow-terragrunt-actions`                    | `core-cloud-workflow-terragrunt-actions`                       |
 | GitHub environment | `live-ops-tooling`                                          | `test-ops-tooling`                                             |
-| Runner (`runs-on`) | `cc-ghec-actions-runner-live`                               | `cc-ghec-actions-runner-test`                                  |
+| Runner (`runs-on`) | `cc-ghec-actions-runner-live1`                              | `cc-ghec-actions-runner-test1`                                 |
 
 The destination repository name is taken from this repository's name
 (`github.event.repository.name`) by the reusable workflow; it is not configured here.
