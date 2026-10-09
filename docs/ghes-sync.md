@@ -69,14 +69,14 @@ environment's value, not a repository-level one.
 AWS Secrets Manager is the source of truth. The GitHub environment secrets are working
 copies; the workflow does not call AWS at run time.
 
-- AWS account: LiveOpsTooling
-- Region: TBC
+- AWS accounts: CCLiveOpsTooling (live pair) and CCTestOpsTooling (test pair), one secret each
+- Region: eu-west-2 (London) in both accounts
 - Secret name: `reusable-workflows-sync-github-app-credentials`
-- Key names: TBC
+- Key names: `app_id` and `private_key` (PEM, multi-line)
 
 Provisioning (approved process, per the team):
 
-1. Sign in to the AWS console for the LiveOpsTooling account (requires the corporate network).
+1. Sign in to the AWS console for the matching account, CCLiveOpsTooling or CCTestOpsTooling (requires the corporate network and VPN).
 2. Secrets Manager > the secret above > Retrieve secret value.
 3. In this repository: Settings > Environments > the environment > Add environment secret.
    Create `APP_ID` and `PRIVATE_KEY` with the values for that destination.
