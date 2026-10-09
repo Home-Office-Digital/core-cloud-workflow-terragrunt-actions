@@ -35,7 +35,7 @@ The destination repository name is taken from this repository's name
    to the destination.
 
 Because of step 4, any change made directly on the GHES copy is overwritten on the
-next push to `main` here. The GHES copies are read-only mirrors.
+next push to `main` or any tag here. The GHES copies are read-only mirrors.
 
 ## Runners
 
